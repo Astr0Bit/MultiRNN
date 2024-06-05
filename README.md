@@ -1,138 +1,87 @@
 # MultiRNN
 
-The `MultiRNN` class provides tools for building, training, and evaluating a multi-layer Recurrent Neural Network (RNN) using Long Short-Term Memory (LSTM) layers for time series forecasting.
+This class is designed to help design RNN / LSTM models for time series forecasting.
+It works by taking in a train and a test dataset with many or just one feature except 
+for the index. It then check these datasets for missing values and that they are good to go.
 
-## Features
+After that, it's up to the user to define the model / models architecture that will be used.
+You can either pass in a single int or string per variable, or pass a list with the same amount
+of features in the original dataset, and the class will create a unique model for each feature.
 
-- Customizable LSTM layers
-- Train-test split for time series data
-- Data scaling using `MinMaxScaler`
-- Model persistence using `joblib`
-- Visualization of training performance
+Feel free to play around with the already existing demo file under "demo" folder, or why not
+add your own dataset to the "data" folder and create your own model / models. 
 
-## Installation
+IMPORTANT: to decrease the execution time, the class will only create 2 models. This can be
+changed by commenting out lines 166 and 167 in the "multirnn.py" file. Also, it is highly
+recommended using a GPU to train the models, as it will take a long time to train them on a CPU.
 
-To use the `MultiRNN` class, ensure you have the following dependencies installed:
+## Setup
+
+Before you try to execute any code,
+make sure you have the following libraries installed:
+
+- pandas
+- numpy
+- matplotlib
+- tensorflow==2.15
+- sklearn
+- keras
+
+If unsure, you can install them by running the following command:
 
 ```bash
-pip install numpy pandas termcolor joblib matplotlib scikit-learn keras
+pip install -r requirements.txt
 ```
 
-## Usage
+## Example Usage
 
-### Importing the MultiRNN Class
+To use the class, you can either create a new instance of it and pass in the train and test datasets, which you need to manuall create, or run the demo file under the "demo" folder.
 
 ```python
 from multirnn import MultiRNN
-```
 
-### Creating and Training the Model
-
-```python
+# Create train and test datasets
 import pandas as pd
 
-# Load your time series data
-train_data = pd.read_csv('train.csv')
-test_data = pd.read_csv('test.csv')
+df = pd.read_csv("data/demo_data.csv")
+train = df.iloc[:int(len(df)*0.8)]
+test = df.iloc[int(len(df)*0.8):]
 
-# Initialize the model
-model = MultiRNN(
-    train=train_data, 
-    test=test_data, 
-    length=10, 
-    LSTM_units=[50, 30], 
-    activation=['tanh', 'relu']
-)
+# Create instance of MultiRNN --> this also gets the loss before training
+multi = MultiRNN(train=train, test=test,
+                 length=10, LSTM_units=32,
+                 activation="tanh", optimizer="adam",
+                 batch_size=10, epochs=5)
 
-# Train the model
-history = model.train(epochs=100, batch_size=32)
+# Save the created sub-datasets (optional)
+multi.save_datasets(dir_path="path/to/save")
+
+# Save scalers for each feature (optional)
+multi.save_scalers(dir_path="path/to/save")
+
+# Save scaled datasets (optional)
+multi.save_scaled_datasets(dir_path="path/to/save")
+
+# Train / fit the models
+multi.fit_models()
+
+# Save the models (optional)
+multi.save_models(dir_path="path/to/save")
+
+# Make prediction on test dataset
+multi.predict()
+
+# Plot the predictions for given feature
+multi.plot_predictions(column="feature_name",
+                       figure_height=5,
+                       figure_width=10,
+                       save_plot=True,
+                       save_plot_name="path/to/save")
+
+# Plot the loss for given feature
+multi.plot_loss(column="feature_name",
+                figure_height=5,
+                figure_width=10,
+                save_plot=True,
+                save_plot_name="path/to/save")
 ```
-
-### Making Predictions
-
-```python
-predictions = model.predict()
-```
-
-### Plotting the Results
-
-```python
-model.plot()
-```
-
-### Saving the Model
-
-```python
-model.save('model_path')
-```
-
-### Loading a Saved Model
-
-```python
-model = MultiRNN.load('model_path')
-```
-
-## Methods
-
-### `__init__(self, train, test, length, LSTM_units, activation, ... )`
-Initializes the `MultiRNN` class with the provided training and testing datasets, sequence length, LSTM units, and activations.
-
-### `train(self, epochs, batch_size)`
-Trains the RNN model for a specified number of epochs and batch size. Returns the training history.
-
-### `predict(self)`
-Generates predictions for the test dataset.
-
-### `plot(self)`
-Plots the training and testing performance over time.
-
-### `save(self, path)`
-Saves the trained model to the specified path.
-
-### `load(cls, path)`
-Loads a saved model from the specified path.
-
-## Example
-
-Below is a complete example of how to use the `MultiRNN` class.
-
-```python
-import pandas as pd
-from multirnn import MultiRNN
-
-# Load data
-train_data = pd.read_csv('train.csv')
-test_data = pd.read_csv('test.csv')
-
-# Initialize model
-model = MultiRNN(
-    train=train_data, 
-    test=test_data, 
-    length=10, 
-    LSTM_units=[50, 30], 
-    activation=['tanh', 'relu']
-)
-
-# Train model
-history = model.train(epochs=100, batch_size=32)
-
-# Make predictions
-predictions = model.predict()
-
-# Plot results
-model.plot()
-
-# Save model
-model.save('model_path')
-
-# Load model
-loaded_model = MultiRNN.load('model_path')
-```
-
-## Contributing
-
-Feel free to open issues or submit pull requests if you have any suggestions or improvements.
-
-## License
-
-This project is licensed under the MIT License.

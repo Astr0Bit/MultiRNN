@@ -135,10 +135,9 @@ class MultiRNN():
         # generate datasets and scalers (method handles all parameter checks)
         # returns 'self.datasets' and 'self.scaled_datasets'
         # this method should be called by method 
-        # generate_model_list_per_column_in_dataset()
+        # _generate_sub_datasets()
         # so we need to change this later.
-        self.generate_dataset_per_column_with_original_index(self.train, 
-                                                             self.test)
+        self._generate_sub_datasets(self.train, self.test)
 
         # generate models for each column
         # we also need to add the feature to have a list
@@ -152,11 +151,11 @@ class MultiRNN():
             optimizer = MultiRNN.get_param_value(self.optimizer, idx)
             epochs = MultiRNN.get_param_value(self.epochs, idx)
 
-            model, model_name, generator, val_generator = self.build_model_per_column(col, 
-                                                                                    self.scaled_datasets["train"][col]["data"],
-                                                                                    self.scaled_datasets["test"][col]["data"],
-                                                                                    length, LSTM_units, activation, optimizer, 
-                                                                                    batch_size, epochs)
+            model, model_name, generator, val_generator = self._build_sub_models(col, 
+                                                                                 self.scaled_datasets["train"][col]["data"],
+                                                                                 self.scaled_datasets["test"][col]["data"],
+                                                                                 length, LSTM_units, activation, optimizer, 
+                                                                                 batch_size)
             
             self.model_dict[model_name] = {"model" : model,
                                            "generator" : generator,
@@ -214,8 +213,7 @@ class MultiRNN():
         return ready_, errors
 
     # for convenience, this method should be called in the constructor
-    def generate_dataset_per_column_with_original_index(self,
-                                                        train, test):
+    def _generate_sub_datasets(self, train, test):
         """
         Method that will generate datasets as descibed in C. (check PDF)
 
@@ -350,11 +348,10 @@ class MultiRNN():
 
     # this method should be called in generate_model_list_per_column_in_dataset(),
     # which should be called within the constructor
-    def build_model_per_column(self, col:str, scaled_train:pd.DataFrame, 
+    def _build_sub_models(self, col:str, scaled_train:pd.DataFrame, 
                                scaled_test:pd.DataFrame, length:int, 
                                LSTM_units:int|list, activation:str|list,
-                               optimizer:str|list, batch_size:int=1, 
-                               epochs:int|list=25):
+                               optimizer:str|list, batch_size:int=1):
         """
         Method that takes inputs and creates RNN LSTM for
         the generated single column dataset, based on other
@@ -411,10 +408,6 @@ class MultiRNN():
         batch_size : int > 0
             Number of time series samples in each batch
             (except maybe the last one).
-
-        epochs : int > 0 | list of int, default = 25 per feature
-            Number of epochs to train the model.
-            Could either be a single int or list of ints.
 
         Returns model, losses, and model name.
 
@@ -593,11 +586,11 @@ class MultiRNN():
             true_predictions = self.scaled_datasets["train"][col_name]["scaler"].inverse_transform(test_predictions)
             self.test_pred_dfs[col_name]["predictions"] = true_predictions
 
-    def plot_predict_against_test_dataset_per_column(self, column:str, 
-                                                     figure_width:int=5,
-                                                     figure_height:int=5,
-                                                     save_plot:bool=False,
-                                                     save_plot_name:str="plot_test_vs_predict_"):
+    def plot_predictions(self, column:str, 
+                         figure_width:int=5,
+                         figure_height:int=5,
+                         save_plot:bool=False,
+                         save_plot_name:str="plot_test_vs_predict_"):
         """
         Method to plot the real test values and predicted values on the same plot
         using plot dimensions mentioned and column name. And save the plots.
@@ -634,11 +627,11 @@ class MultiRNN():
         else:
             raise ValueError(f"Invalid column name '{column}'")
 
-    def plot_loss_val_loss_per_column(self, column:str, 
-                                      figure_width:int=5,
-                                      figure_height:int=5,
-                                      save_plot:bool=False,
-                                      save_plot_name:str="plot_loss_val_loss_"):
+    def plot_loss(self, column:str, 
+                  figure_width:int=5,
+                  figure_height:int=5,
+                  save_plot:bool=False,
+                  save_plot_name:str="plot_loss_val_loss_"):
         """
         Method to plot loss against val_loss 
         of input column and save it.
