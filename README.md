@@ -43,7 +43,7 @@ from multirnn import MultiRNN
 # Create train and test datasets
 import pandas as pd
 
-df = pd.read_csv("data/demo_data.csv")
+df = pd.read_csv("data/path/here.csv")
 train = df.iloc[:int(len(df)*0.8)]
 test = df.iloc[int(len(df)*0.8):]
 
@@ -84,4 +84,9 @@ multi.plot_loss(column="feature_name",
                 figure_width=10,
                 save_plot=True,
                 save_plot_name="path/to/save")
+```
+
+# License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 ```
